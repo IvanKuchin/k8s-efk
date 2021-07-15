@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: elastic-pv
+  labels:
+    type: nfs
+spec:
+  storageClassName: slow
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  #
+  # better use local type for single-node  deployment, but local type doesn't work well for minikube deployment
+  # local type used to be able to use storage on multiple nodes independently
+  # in case of multi-node deployment consider switch to StatefulSet
+  #
+  nfs:
+    path: /storage_local/logging/elastic
+    server: 192.168.170.35
+  claimRef:
+    name: elastic-pvc
+    namespace: logging
+
