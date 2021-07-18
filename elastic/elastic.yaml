@@ -16,6 +16,7 @@ spec:
     spec:
       volumes:
         - name: elastic-volume
+        #  emptyDir: {}
           persistentVolumeClaim:
             claimName: elastic-pvc
       initContainers:
@@ -33,6 +34,15 @@ spec:
         env:
         - name: discovery.type
           value: "single-node"
+        - name: ES_JAVA_OPTS
+          value: -Xms1024m -Xmx1024m
+        resources:
+          limits:
+            cpu: 8
+            memory: 2350Mi
+          requests:
+            cpu: 100m
+            memory: 2000Mi
         volumeMounts:
         - name: elastic-volume
           mountPath: /usr/share/elasticsearch/data
