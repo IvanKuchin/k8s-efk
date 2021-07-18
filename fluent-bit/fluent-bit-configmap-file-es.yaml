@@ -122,8 +122,9 @@ data:
     [PARSER]
         Name        app_log
         Format      regex
-        # Regex       ^{"log":"(?<datetime>[^\[]*)\[(?<pid>\d+)\] (?<log_severity>(DEBUG|WARNING|ERROR|PANIC)): (?<function>[^\[]+)\[(?<line_number>\d+)\](?<log_message>.*)","stream":"(?<stream>stdout|stderr)","time":"(?<time>[^"]+)"}$
-        Regex       ^(?<datetime>[^\[]*)\[(?<pid>\d+)\] (?<log_severity>(DEBUG|WARNING|ERROR|PANIC)):(?<pretty_function>[^\[]+)\[(?<line_number>\d+)\] *(?<log_message>.*)$
+        # Regex       ^(?<datetime>[^\[]*)\[(?<pid>\d+)\] (?<log_severity>(DEBUG|WARNING|ERROR|PANIC)):(?<pretty_function>[^\[]+)\[(?<line_number>\d+)\] *(?<log_message>.*)$
+        Regex       ^(?<datetime>[^\[]*)\[(?<pid>\d+)\] (?<log_severity>(DEBUG|INFO|WARNING|ERROR|PANIC)):(?<pretty_function>[^\[]+)\[(?<line_number>\d+)\] *(?<log_message>(?>chrono duration = (?<chrono_duration>\d+) microseconds|.*))$
+        Types       chrono_duration:integer line_number:integer pid:integer
         Time_Key    time
         Time_Format %b %d %H:%M:%S
         Time_Keep   On
