@@ -5,7 +5,7 @@ metadata:
   namespace: logging
 spec:
   rules:
-  - host: minikube-kibana.connme.ru
+  - host: kibana.minikube.conn-me.ru
     http:
       paths:
       - pathType: Prefix

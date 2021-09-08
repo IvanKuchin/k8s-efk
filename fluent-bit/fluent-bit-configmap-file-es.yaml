@@ -47,10 +47,42 @@ data:
         K8S-Logging.Exclude Off
         Merge_Parser        app_log
 
+    [FILTER]
+        Name                kubernetes
+        Match               kube.*_log-apache-access-container-*
+        Kube_URL            https://kubernetes.default.svc:443
+        Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
+        Kube_Tag_Prefix     kube.var.log.containers.
+        Merge_Log           On
+        Merge_Log_Key       log_processed
+        K8S-Logging.Parser  On
+        K8S-Logging.Exclude Off
+        Merge_Parser        apache2
+
+    [FILTER]
+        Name                kubernetes
+        Match               kube.*_log-apache-error-container-*
+        Kube_URL            https://kubernetes.default.svc:443
+        Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
+        Kube_Tag_Prefix     kube.var.log.containers.
+        Merge_Log           On
+        Merge_Log_Key       log_processed
+        K8S-Logging.Parser  On
+        K8S-Logging.Exclude Off
+        Merge_Parser        apache_error
+
   output-elasticsearch.conf: |
     [OUTPUT]
         Name            file
         Match           kube.*_log-app-container*
+        Format          out_file
+        Path            /logoutput
+
+    [OUTPUT]
+        Name            file
+        Match           kube.*_log-apache-*
         Format          out_file
         Path            /logoutput
 
