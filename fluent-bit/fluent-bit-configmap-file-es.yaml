@@ -49,7 +49,7 @@ data:
 
     [FILTER]
         Name                kubernetes
-        Match               kube.*_log-apache-access-container-*
+        Match               kube.*_log-*-apache-access-*
         Kube_URL            https://kubernetes.default.svc:443
         Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
         Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
@@ -62,7 +62,7 @@ data:
 
     [FILTER]
         Name                kubernetes
-        Match               kube.*_log-apache-error-container-*
+        Match               kube.*_log-*-apache-error-*
         Kube_URL            https://kubernetes.default.svc:443
         Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
         Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
@@ -76,13 +76,7 @@ data:
   output-elasticsearch.conf: |
     [OUTPUT]
         Name            file
-        Match           kube.*_log-app-container*
-        Format          out_file
-        Path            /logoutput
-
-    [OUTPUT]
-        Name            file
-        Match           kube.*_log-apache-*
+        Match           kube.*_log-*-container*
         Format          out_file
         Path            /logoutput
 
