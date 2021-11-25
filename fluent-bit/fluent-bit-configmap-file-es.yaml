@@ -162,6 +162,6 @@ data:
         Regex       ^(?<crio_log_time>.+) (?<crio_log_stream>stdout|stderr) (?<crio_log_tag>F|P) (?<datetime>[^\[]*)\[(?<pid>\d+)\] (?<log_severity>(DEBUG|INFO|WARNING|ERROR|PANIC)):(?<pretty_function>[^\[]+)\[(?<line_number>\d+)\] *(?<log_message>(?>chrono duration = (?<chrono_duration>\d+) microseconds|.*))$
         Types       chrono_duration:integer line_number:integer pid:integer
         Time_Key    datetime
-        Time_Format %b %d %H:%M:%S.%L
+        Time_Format %b %d %Y %H:%M:%S.%L
         Time_Keep   On
 
