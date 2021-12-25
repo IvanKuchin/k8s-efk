@@ -73,11 +73,11 @@ data:
         Merge_Parser        apache_error
 
   output-elasticsearch.conf: |
-    [OUTPUT]
-        Name            file
-        Match           kube.*_log-*-container*
-        Format          out_file
-        Path            /logoutput
+    #[OUTPUT]
+    #    Name            file
+    #    Match           kube.*_log-*-container*
+    #    Format          out_file
+    #    Path            /logoutput
 
     [OUTPUT]
         Name            es
