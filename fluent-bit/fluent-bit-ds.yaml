@@ -43,8 +43,8 @@ spec:
         - name: mnt
           mountPath: /mnt
           readOnly: true
-        - name: logoutput
-          mountPath: /logoutput
+        #- name: logoutput
+        #  mountPath: /logoutput
       terminationGracePeriodSeconds: 10
       volumes:
       - name: varlog
@@ -59,9 +59,9 @@ spec:
       - name: mnt
         hostPath:
           path: /mnt
-      - name: logoutput
-        hostPath:
-          path: /logoutput
+      #- name: logoutput
+      #  hostPath:
+      #    path: /logoutput
       serviceAccountName: fluent-bit
       tolerations:
       - key: node-role.kubernetes.io/master
