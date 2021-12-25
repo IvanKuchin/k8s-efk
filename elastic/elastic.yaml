@@ -38,7 +38,7 @@ spec:
           value: -Xms1024m -Xmx1024m
         resources:
           limits:
-            cpu: 8
+            cpu: 2
             memory: 2350Mi
           requests:
             cpu: 100m
