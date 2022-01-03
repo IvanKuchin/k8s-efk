@@ -107,7 +107,7 @@ data:
     [PARSER]
         Name   apache_error
         Format regex
-        Regex  ^\[[^ ]* (?<time>[^\]]*)\] \[(?<level>[^\]]*)\](?: \[pid (?<pid>[^\]]*)\])?( \[client (?<client>[^\]]*)\])? (?<message>.*)$
+        Regex  ^\[[^ ]* (?<time>[^\]]*)\] \[(?<level>[^\]]*)\](?: \[pid (?<apache_error_pid>[^\]]*)\])?( \[client (?<client>[^\]]*)\])? (?<message>.*)$
 
     [PARSER]
         Name   nginx
