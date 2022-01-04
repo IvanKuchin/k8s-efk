@@ -24,22 +24,34 @@ data:
   input-kubernetes.conf: |
     [INPUT]
         Name              tail
-        Tag               kube.*
-        Path              /var/log/containers/*.log
+        Tag               app.*
+        Path              /var/log/containers/app-*.log
         Parser            docker
-        DB                /var/log/flb_kube.db
+        DB                /var/log/flb_tail_app.db
         Mem_Buf_Limit     5MB
         Skip_Long_Lines   On
-        Refresh_Interval  10
+        Refresh_Interval  60
+        Ignore_Older      7d
+
+    [INPUT]
+        Name              tail
+        Tag               images.*
+        Path              /var/log/containers/images-*.log
+        Parser            docker
+        DB                /var/log/flb_tail_images.db
+        Mem_Buf_Limit     5MB
+        Skip_Long_Lines   On
+        Refresh_Interval  60
+        Ignore_Older      7d
 
   filter-kubernetes.conf: |
     [FILTER]
         Name                kubernetes
-        Match               kube.*_log-app-container-*
+        Match               app.*_log-app-container-*
         Kube_URL            https://kubernetes.default.svc:443
         Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
         Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
-        Kube_Tag_Prefix     kube.var.log.containers.
+        Kube_Tag_Prefix     app.var.log.containers.
         Merge_Log           On
         Merge_Log_Key       log_processed
         K8S-Logging.Parser  On
@@ -48,46 +60,85 @@ data:
 
     [FILTER]
         Name                kubernetes
-        Match               kube.*_log-*-apache-access-*
+        Match               app.*_log-*-apache-access-*
         Kube_URL            https://kubernetes.default.svc:443
         Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
         Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
-        Kube_Tag_Prefix     kube.var.log.containers.
+        Kube_Tag_Prefix     app.var.log.containers.
         Merge_Log           On
         Merge_Log_Key       log_processed
         K8S-Logging.Parser  On
         K8S-Logging.Exclude Off
-        Merge_Parser        apache2
+        Merge_Parser        apache2_crio
 
     [FILTER]
         Name                kubernetes
-        Match               kube.*_log-*-apache-error-*
+        Match               app.*_log-*-apache-error-*
         Kube_URL            https://kubernetes.default.svc:443
         Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
         Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
-        Kube_Tag_Prefix     kube.var.log.containers.
+        Kube_Tag_Prefix     app.var.log.containers.
         Merge_Log           On
         Merge_Log_Key       log_processed
         K8S-Logging.Parser  On
         K8S-Logging.Exclude Off
-        Merge_Parser        apache_error
+        Merge_Parser        apache_error_crio
+
+
+    [FILTER]
+        Name                kubernetes
+        Match               images.*_log-*-apache-access-*
+        Kube_URL            https://kubernetes.default.svc:443
+        Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
+        Kube_Tag_Prefix     images.var.log.containers.
+        Merge_Log           On
+        Merge_Log_Key       log_processed
+        K8S-Logging.Parser  On
+        K8S-Logging.Exclude Off
+        Merge_Parser        apache2_crio
+
+    [FILTER]
+        Name                kubernetes
+        Match               images.*_log-*-apache-error-*
+        Kube_URL            https://kubernetes.default.svc:443
+        Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
+        Kube_Tag_Prefix     images.var.log.containers.
+        Merge_Log           On
+        Merge_Log_Key       log_processed
+        K8S-Logging.Parser  On
+        K8S-Logging.Exclude Off
+        Merge_Parser        apache_error_crio
 
   output-elasticsearch.conf: |
     #[OUTPUT]
     #    Name            file
-    #    Match           kube.*_log-*-container*
+    #    Match           images.*_www-timecard-ru_*
     #    Format          out_file
     #    Path            /logoutput
 
     [OUTPUT]
         Name            es
-        Match           *
+        Match           app.*_log-app-container-*
         Host            ${FLUENT_ELASTICSEARCH_HOST}
         Port            ${FLUENT_ELASTICSEARCH_PORT}
         Logstash_Format On
         Logstash_Prefix app
         Replace_Dots    On
-        Retry_Limit     False
+        Retry_Limit     1
+        Trace_Error     On
+
+    [OUTPUT]
+        Name            es
+        Match           *-apache-*
+        Host            ${FLUENT_ELASTICSEARCH_HOST}
+        Port            ${FLUENT_ELASTICSEARCH_PORT}
+        Logstash_Format On
+        Logstash_Prefix apache
+        Replace_Dots    On
+        Retry_Limit     1
+        Trace_Error     On
 
   parsers.conf: |
     [PARSER]
@@ -98,16 +149,33 @@ data:
         Time_Format %d/%b/%Y:%H:%M:%S %z
 
     [PARSER]
-        Name   apache2
+        Name   apache2_docker
         Format regex
         Regex  ^(?<host>[^ ]*) [^ ]* (?<user>[^ ]*) \[(?<time>[^\]]*)\] "(?<method>\S+)(?: +(?<path>[^ ]*) +\S*)?" (?<code>[^ ]*) (?<size>[^ ]*)(?: "(?<referer>[^\"]*)" "(?<agent>[^\"]*)")?$
         Time_Key time
         Time_Format %d/%b/%Y:%H:%M:%S %z
 
     [PARSER]
-        Name   apache_error
+        Name   apache2_crio
+        Format regex
+        Regex  ^(?<crio_log_time>.+) (?<crio_log_stream>stdout|stderr) (?<crio_log_tag>F|P) (?<host>[^ ]*) [^ ]* (?<user>[^ ]*) \[(?<time>[^\]]*)\] "(?<method>\S+)(?: +(?<path>[^ ]*) +\S*)?" (?<code>[^ ]*) (?<size>[^ ]*)(?: "(?<referer>[^\"]*)" "(?<agent>[^\"]*)")?
+        Time_Keep   On
+        Time_Key    crio_log_time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L%z
+
+    [PARSER]
+        Name   apache_error_docker
         Format regex
         Regex  ^\[[^ ]* (?<time>[^\]]*)\] \[(?<level>[^\]]*)\](?: \[pid (?<apache_error_pid>[^\]]*)\])?( \[client (?<client>[^\]]*)\])? (?<message>.*)$
+
+    [PARSER]
+        Name   apache_error_crio
+        Format regex
+        # Regex  ^(?<crio_log_time>.+) (?<crio_log_stream>stdout|stderr) (?<crio_log_tag>F|P) \[(?<time>[^\]]*)\] \[(?<level>[^\]]*)\](?: \[pid (?<pid>[\d]*)\:tid (?<tid>[\d]*)\])? (?<message>.*)
+        Regex  ^(?<crio_log_time>.+) (?<crio_log_stream>stdout|stderr) (?<crio_log_tag>F|P) \[(?<time>[^\]]*)\] \[(?<level>[^\]]*)\](?: \[pid (?<apache_error_pid>[^\]]*)\])?( \[client (?<client>[^\]]*)\])? (?<message>.*)$
+        Time_Keep   On
+        Time_Key    crio_log_time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L%z
 
     [PARSER]
         Name   nginx
@@ -151,7 +219,7 @@ data:
         Regex       ^(?<datetime>[^\[]*)\[(?<pid>\d+)\] (?<log_severity>(DEBUG|INFO|WARNING|ERROR|PANIC)):(?<pretty_function>[^\[]+)\[(?<line_number>\d+)\] *(?<log_message>(?>chrono duration = (?<chrono_duration>\d+) microseconds|.*))$
         Types       chrono_duration:integer line_number:integer pid:integer
         Time_Key    time
-        Time_Format %b %d %H:%M:%S
+        Time_Format %b %d %Y %H:%M:%S
         Time_Keep   On
 
     [PARSER]
@@ -160,7 +228,6 @@ data:
         # Regex       ^(?<datetime>[^\[]*)\[(?<pid>\d+)\] (?<log_severity>(DEBUG|WARNING|ERROR|PANIC)):(?<pretty_function>[^\[]+)\[(?<line_number>\d+)\] *(?<log_message>.*)$
         Regex       ^(?<crio_log_time>.+) (?<crio_log_stream>stdout|stderr) (?<crio_log_tag>F|P) (?<datetime>[^\[]*)\[(?<pid>\d+)\] (?<log_severity>(DEBUG|INFO|WARNING|ERROR|PANIC)):(?<pretty_function>[^\[]+)\[(?<line_number>\d+)\] *(?<log_message>(?>chrono duration = (?<chrono_duration>\d+) microseconds|.*))$
         Types       chrono_duration:integer line_number:integer pid:integer
-        Time_Key    datetime
-        Time_Format %b %d %Y %H:%M:%S.%L
         Time_Keep   On
-
+        Time_Key    crio_log_time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L%z
