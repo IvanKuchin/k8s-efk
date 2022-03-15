@@ -125,6 +125,7 @@ data:
         Port            ${FLUENT_ELASTICSEARCH_PORT}
         Logstash_Format On
         Logstash_Prefix app
+        # Time_Key_Nanos  On     # --- it breaks logging
         Replace_Dots    On
         Retry_Limit     1
         Trace_Error     On
@@ -136,6 +137,7 @@ data:
         Port            ${FLUENT_ELASTICSEARCH_PORT}
         Logstash_Format On
         Logstash_Prefix apache
+        # Time_Key_Nanos  On     # --- it breaks logging
         Replace_Dots    On
         Retry_Limit     1
         Trace_Error     On
