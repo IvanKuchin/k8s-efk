@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elasticsearch
+  labels:
+    app: elasticsearch
+spec:
+  selector:
+    matchLabels:
+      app: elasticsearch
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+    spec:
+      volumes:
+        - name: elastic-volume
+        #  emptyDir: {}
+          persistentVolumeClaim:
+            claimName: elastic-pvc
+      initContainers:
+      - name: vm-max-fix
+        image: busybox
+        command: ["sysctl", "-w", "vm.max_map_count=262144"]
+        securityContext:
+          privileged: true
+      containers:
+      - name: elasticsearch
+        image: docker.elastic.co/elasticsearch/elasticsearch:7.13.3
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 9200
+        env:
+        - name: discovery.type
+          value: "single-node"
+        - name: ES_JAVA_OPTS
+          value: -Xms1024m -Xmx1024m
+        resources:
+          limits:
+            cpu: 2
+            memory: 2350Mi
+          requests:
+            cpu: 100m
+            memory: 2000Mi
+        volumeMounts:
+        - name: elastic-volume
+          mountPath: /usr/share/elasticsearch/data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch
+  labels:
+    app: elasticsearch
+spec:
+  type: ClusterIP
+  selector:
+    app: elasticsearch
+  ports:
+    - protocol: TCP
+      name: http
+      port: 9200
+      targetPort: 9200
