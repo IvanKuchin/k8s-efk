@@ -14,3 +14,13 @@ spec:
             name: kibana
             port:
               number: 5601
+  - host: elasticsearch.conn-me.ru
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: elasticsearch
+            port:
+              number: 9200

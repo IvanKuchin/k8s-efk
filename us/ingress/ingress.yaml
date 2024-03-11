@@ -4,7 +4,7 @@ metadata:
   name: minimal-ingress
 spec:
   rules:
-  - host: kibana.conn-me.ru
+  - host: kibana.connme.org
     http:
       paths:
       - pathType: Prefix
@@ -14,3 +14,13 @@ spec:
             name: kibana
             port:
               number: 5601
+  - host: elasticsearch.connme.org
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service:
+            name: elasticsearch
+            port:
+              number: 9200
