@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  annotations:
+  name: elastic-pv
+spec:
+  accessModes:
+  - ReadWriteOnce
+  capacity:
+    storage: 10Gi
+  nfs:
+    path: /nfs/elastic-pv
+    server: 192.168.168.32
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: slow
+  volumeMode: Filesystem

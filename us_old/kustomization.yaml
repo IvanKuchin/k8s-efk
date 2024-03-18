@@ -1,0 +1,5 @@
+resources:
+  - elastic
+  - kibana
+  - ingress
+namespace: efk

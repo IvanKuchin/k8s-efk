@@ -16,7 +16,8 @@ spec:
     spec:
       containers:
       - name: kibana
-        image: docker.elastic.co/kibana/kibana:7.13.3
+        image: kibana:7.17.18
+        # image: docker.elastic.co/kibana/kibana:7.13.3
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 5601
@@ -25,6 +26,12 @@ spec:
           value: "http://elasticsearch:9200"
         - name: ELASTICSEARCH_HOSTS
           value: "http://elasticsearch:9200"
+        - name: elasticsearch.username
+          value: "kibana_system" 
+        - name: xpack.security.enabled
+          value: "true"
+        - name: xpack.encryptedSavedObjects.encryptionKey
+          value: "fJo8dVneFvVhWvyqFAJG"
 ---
 apiVersion: v1
 kind: Service

@@ -1,0 +1,5 @@
+resources:
+- stack.yaml
+- sc-nfs.yaml
+- ingress.yaml
+namespace: elastic-system
