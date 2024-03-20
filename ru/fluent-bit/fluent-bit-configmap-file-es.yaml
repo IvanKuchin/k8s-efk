@@ -117,6 +117,9 @@ data:
     #    Match           images.*_www-timecard-ru_*
     #    Path            /logoutput
 
+    #
+    # Logs send to localy run ElasticSearch
+    #
     [OUTPUT]
         Name            es
         Match           app.*_log-app-container-*
@@ -142,6 +145,47 @@ data:
         Replace_Dots    On
         Retry_Limit     1
         Trace_Error     On
+
+    #
+    # Logs send to the monitoring instance
+    #
+    [OUTPUT]
+        Name            es
+        Match           *-apache-*
+        Host            elasticsearch.connme.org
+        Port            80
+        HTTP_User       elastic
+        HTTP_Passwd     4f2F0Qb4TEM6V963qq96ziuV
+        # Cloud_ID        ru-farm-1:TUJwb1A0NEJJb1dJeDRUWDhNTFM6ZjN3SFJzQ2JSNG1oTnJwZEprbVRjZw==
+        # Cloud_Auth      elastic:2j41oqlVlQeFDpF60z13X405
+        Index           apache-prod-ds
+        # Logstash_Format On
+        # Logstash_Prefix apache
+        # Time_Key_Nanos  On     # --- it breaks logging
+        Replace_Dots    On
+        Retry_Limit     1
+        Trace_Error     On
+        # tls             Off
+        # tls.verify      Off
+        Suppress_Type_Name On
+
+    [OUTPUT]
+        Name            es
+        Match           app.*_log-app-container-*
+        Host            elasticsearch.connme.org
+        Port            80
+        HTTP_User       elastic
+        HTTP_Passwd     4f2F0Qb4TEM6V963qq96ziuV
+        Index           logs-apps-prod
+        # Logstash_Format On
+        # Logstash_Prefix app
+        # Time_Key_Nanos  On     # --- it breaks logging
+        Replace_Dots    On
+        Retry_Limit     1
+        Trace_Error     On
+        Suppress_Type_Name On
+
+
 
   parsers.conf: |
     [PARSER]
