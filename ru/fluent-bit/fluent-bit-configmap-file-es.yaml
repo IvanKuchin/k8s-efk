@@ -35,6 +35,17 @@ data:
 
     [INPUT]
         Name              tail
+        Tag               ingress.*
+        Path              /var/log/containers/*ingress_nginx*.log
+        Parser            docker
+        DB                /var/log/flb_tail_ingress_nginx.db
+        Mem_Buf_Limit     5MB
+        Skip_Long_Lines   On
+        Refresh_Interval  60
+        Ignore_Older      7d
+
+    [INPUT]
+        Name              tail
         Tag               images.*
         Path              /var/log/containers/images-*.log
         Parser            docker
@@ -43,6 +54,7 @@ data:
         Skip_Long_Lines   On
         Refresh_Interval  60
         Ignore_Older      7d
+
 
   filter-kubernetes.conf: |
     [FILTER]
@@ -111,10 +123,23 @@ data:
         K8S-Logging.Exclude Off
         Merge_Parser        apache_error_crio
 
+    [FILTER]
+        Name                kubernetes
+        Match               *ingress_nginx*
+        Kube_URL            https://kubernetes.default.svc:443
+        Kube_CA_File        /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+        Kube_Token_File     /var/run/secrets/kubernetes.io/serviceaccount/token
+        Kube_Tag_Prefix     ingress_nginx.var.log.containers.
+        Merge_Log           On
+        Merge_Log_Key       log_processed
+        K8S-Logging.Parser  On
+        K8S-Logging.Exclude Off
+        Merge_Parser        nginx_crio
+
   output-elasticsearch.conf: |
     #[OUTPUT]
     #    Name            file
-    #    Match           images.*_www-timecard-ru_*
+    #    Match           *ingress_nginx*
     #    Path            /logoutput
 
     #
@@ -158,7 +183,7 @@ data:
         HTTP_Passwd     4f2F0Qb4TEM6V963qq96ziuV
         # Cloud_ID        ru-farm-1:TUJwb1A0NEJJb1dJeDRUWDhNTFM6ZjN3SFJzQ2JSNG1oTnJwZEprbVRjZw==
         # Cloud_Auth      elastic:2j41oqlVlQeFDpF60z13X405
-        Index           apache-prod-ds
+        Index             logs-apache-prod
         # Logstash_Format On
         # Logstash_Prefix apache
         # Time_Key_Nanos  On     # --- it breaks logging
@@ -177,6 +202,22 @@ data:
         HTTP_User       elastic
         HTTP_Passwd     4f2F0Qb4TEM6V963qq96ziuV
         Index           logs-apps-prod
+        # Logstash_Format On
+        # Logstash_Prefix app
+        # Time_Key_Nanos  On     # --- it breaks logging
+        Replace_Dots    On
+        Retry_Limit     1
+        Trace_Error     On
+        Suppress_Type_Name On
+
+    [OUTPUT]
+        Name            es
+        Match           *ingress_nginx*
+        Host            elasticsearch.connme.org
+        Port            80
+        HTTP_User       elastic
+        HTTP_Passwd     4f2F0Qb4TEM6V963qq96ziuV
+        Index           logs-ingress-prod
         # Logstash_Format On
         # Logstash_Prefix app
         # Time_Key_Nanos  On     # --- it breaks logging
@@ -275,6 +316,14 @@ data:
         # Regex       ^(?<datetime>[^\[]*)\[(?<pid>\d+)\] (?<log_severity>(DEBUG|WARNING|ERROR|PANIC)):(?<pretty_function>[^\[]+)\[(?<line_number>\d+)\] *(?<log_message>.*)$
         Regex       ^(?<crio_log_time>.+) (?<crio_log_stream>stdout|stderr) (?<crio_log_tag>F|P) (?<datetime>[^\[]*)\[(?<pid>\d+)\] (?<log_severity>(DEBUG|INFO|WARNING|ERROR|PANIC)):(?<pretty_function>[^\[]+)\[(?<line_number>\d+)\] *(?<log_message>(?>chrono duration = (?<chrono_duration>\d+) microseconds|.*))$
         Types       chrono_duration:integer line_number:integer pid:integer
+        Time_Keep   On
+        Time_Key    crio_log_time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L%z
+
+    [PARSER]
+        Name        nginx_crio
+        Format      regex
+        Regex       ^(?<crio_log_time>.+) (?<crio_log_stream>stdout|stderr) (?<crio_log_tag>F|P) (?<remote>[^ ]*) (?<host>[^ ]*) (?<user>[^ ]*) \[(?<time>[^\]]*)\] "(?<method>\S+)(?: +(?<path>[^\"]*?)(?: +\S*)?)?" (?<code>[^ ]*) (?<size>[^ ]*)(?: "(?<referer>[^\"]*)" "(?<agent>[^\"]*)")? (?<request_length>\d+) (?<request_time>[^ ]*) \[(?<proxy_upstream_name>[^\]]*)\] \[(?<proxy_alternative_upstream_name>[^\]]*)\] (?<upstream_addr>[^ ]*) (?<upstream_upstream_response_length>\d+) (?<upstream_upstream_response_time>[^ ]*) (?<upstream_status>\d+) (?<req_id>.*)$
         Time_Keep   On
         Time_Key    crio_log_time
         Time_Format %Y-%m-%dT%H:%M:%S.%L%z
