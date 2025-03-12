@@ -21,6 +21,7 @@ spec:
         prometheus.io/port: "2020"
         prometheus.io/path: /api/v1/metrics/prometheus
     spec:
+      shareProcessNamespace: true
       containers:
       - name: fluent-bit
         image: fluent/fluent-bit:1.8
